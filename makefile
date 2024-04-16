@@ -1,14 +1,21 @@
 ASM=nasm
 SRC_DIR=src
 BUILD_DIR=build
+C_COMP=gcc
 
 
 
-.PHONY: floppy_image kernel bootloader always
+.PHONY: floppy_image kernel bootloader tool_fat_read always
 
 
 
 
+
+
+tool_fat_read: $(BUILD_DIR)/tools/FAT_reader
+
+$(BUILD_DIR)/tools/FAT_reader: always
+	$(C_COMP) ./$(SRC_DIR)/tools/fat_reader.c -o ./$(BUILD_DIR)/tools/FAT_reader 
 
 floppy_image: $(BUILD_DIR)/main_floppy.img
 
@@ -33,6 +40,7 @@ $(BUILD_DIR)/kernel.bin: always
 
 always:
 	mkdir -p $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)/tools
 
 clean:
 	rm -rf $(BUILD_DIR)/*
