@@ -9,8 +9,8 @@ nop
 oem_id:					db "MSWIN4.1"				;OEM identifier MSWIN4.1 value recomended (8 bytes)
 no_bytes_per_sector:	dw 0x0200					;number of bytes per sector, 512 in our case (2 bytes)
 no_sectors_per_cluster: db 0x01						;number of sectors per cluster, 1 in our case (1 byte)
-no_res_sectors:			dw 0x0001					;number of reserved sectors, 1 in ou]r case (1 byte)
-no_FATS:				db 0x02						;number of file allocation tables on the storage, often its 2 (1 byte)
+no_res_sectors:			dw 0x0001					;number of reserved sectors, 1 in ou]r case (2 byte)
+no_FATS:				db 0x02						;number of FATs on the storage, often its 2 (1 byte)
 no_root_dir_entries:	dw 0x00E0					;number of root directory entries, root dir must occupie entire sectors (2 bytes)
 no_total_sectors:		dw 0x0B40					;number of total sectors in logical volume 2880*512 = 1.44MB
 media_type:				db 0xF0						;media type F0 is floppy 3.5'' (1 byte)
