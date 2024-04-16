@@ -88,12 +88,20 @@ void Show_RootEntries(DirEntry* rootEntry, uint32_t rootEntriesCount){
 
     printf("Root Entries found on image: \n");
     for(int i = 0; i < rootEntriesCount; i++){
+        if(disk_RootEntry[i].FileName[0]==0){
+            break;
+        }
+        uint16_t s, m, h;
+        s = (disk_RootEntry[i].CreationTime & 31)*2;
+        m = (disk_RootEntry[i].CreationTime >> 5) & 63;
+        h = (disk_RootEntry[i].CreationTime >> 11) & 31;
+
         printf("\nRoot Entry %d\n", i+1);
         printf("File name: |%.8s|\n", disk_RootEntry[i].FileName);
         printf("File extension: |%.3s|\n", disk_RootEntry[i].FileExtension);
         printf("File Attributes: |0x%x|\n", disk_RootEntry[i].Attributes);
         printf("Reserved: |0x%x|\n", disk_RootEntry[i].Reserved);
-        printf("Creation Time: |%d|\n", disk_RootEntry[i].CreationTime);
+        printf("Creation Time: |%d:%d:%d|\n", h, m, s);
         printf("Creation Date: |%d|\n", disk_RootEntry[i].CreationDate);
         printf("Last Access Date: |%d|\n", disk_RootEntry[i].LastAccessDate);
         printf("Ignore: |0x%x|\n", disk_RootEntry[i].Ignore);
