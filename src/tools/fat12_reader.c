@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef uint8_t bool;
 #define true 1
@@ -58,21 +59,26 @@ DirEntry* disk_RootEntry = NULL;
 
 void dump_fatTable(uint8_t* fatTable){
     printf("\nDUMPING FAT Table contents...\n");
-    for(int i = 0; i < disk_BootSector.sectorsPerFAT*disk_BootSector.bytesPerSector-1; i++){
+    uint16_t offset = 0;
+    for(int i = 0; i < 2880; i++){
         uint16_t entry_buffer;
-        entry_buffer = ((uint16_t)fatTable[i] << 8) | fatTable[i+1];
-        if(i % 2 == 0){//even
+        if(i > 1 && i % 2 == 0){
+            offset++;
+        }
+        entry_buffer = (((uint16_t)fatTable[i+1+offset]) << 8) | fatTable[i+offset];
+
+        if(i % 2 != 0){//odd
             entry_buffer = entry_buffer >> 4;
         }
-        else{//odd
+        else{//even
             entry_buffer = entry_buffer & 0b0000111111111111;
         }
-        printf("%dx%x ",i, entry_buffer);
-        if(i % 20 == 0 && i != 0){
+        printf("%xx%x ",i, entry_buffer);
+        if(i % 16 == 0 && i != 0){
             printf("\n");
         }
     }
-    printf("\n");
+    
 }
 
 void show_BPB(BootSector diskBootSector)
@@ -187,6 +193,59 @@ bool readRootDirectory(FILE* diskImage)
     disk_RootEntry = (DirEntry*)malloc(root_length_sectors * disk_BootSector.bytesPerSector);
     return readSector(diskImage, root_start_sector, root_length_sectors, disk_RootEntry);
 }
+void interpretFAT(FILE* diskImage, uint16_t first_cluster, void* file_content_buffer){
+    uint16_t current_cluster;
+    uint16_t next_cluster = first_cluster;
+    do{
+        current_cluster = next_cluster;
+
+        next_cluster = ((uint16_t) FAT_Table[current_cluster*3/2 + 1] << 8) | FAT_Table[current_cluster*3/2];
+        if(current_cluster % 2 != 0){//odd
+            next_cluster = next_cluster >> 4;
+        }
+        else{//even
+            next_cluster = next_cluster & 0b0000111111111111;
+        }
+        
+        uint32_t lba = disk_BootSector.reservedSectors;
+        lba += disk_BootSector.FAT_number*disk_BootSector.sectorsPerFAT;
+        lba += disk_BootSector.rootDirEntries*32/disk_BootSector.bytesPerSector;
+        lba += (current_cluster - 2)*disk_BootSector.sectorsPerCluster;
+
+        printf("Current cluster: 0x%x\n", current_cluster);
+        printf("Next cluster: 0x%x\n", next_cluster);
+        printf("Current lba: %d\n\n", lba);
+
+        readSector(diskImage, lba, disk_BootSector.sectorsPerCluster, file_content_buffer);
+        file_content_buffer += disk_BootSector.sectorsPerCluster*disk_BootSector.bytesPerSector;
+
+    }while(next_cluster < 0xFF8);
+}
+
+
+uint32_t readFile(FILE* diskImage, uint8_t* seek_name){
+    for(int i = 0; i < disk_BootSector.rootDirEntries; i++){
+        uint8_t* file_name = (uint8_t* ) malloc(11);
+        memcpy(&file_name[0], disk_RootEntry[i].fileName, 8);
+        memcpy(&file_name[8], disk_RootEntry[i].fileExtension, 3);
+        if(!memcmp(file_name, seek_name, 11)){
+            printf("\nFile found! |%.11s|\n", file_name);
+            printf("Allocating %dB of memory\n", disk_RootEntry[i].fileSize + disk_BootSector.sectorsPerCluster*disk_BootSector.bytesPerSector);
+            uint8_t* content_buffer = (uint8_t* ) malloc(disk_RootEntry[i].fileSize + disk_BootSector.sectorsPerCluster*disk_BootSector.bytesPerSector);
+            interpretFAT(diskImage, disk_RootEntry[i].firstLogicalCluster, content_buffer);
+            free(file_name);
+            printf("\nFile contents: \n");
+            for(int j = 0; j < disk_RootEntry[i].fileSize;j++){
+                printf("%c", content_buffer[j]);
+            }
+            printf("\n");
+            free(content_buffer);
+            return disk_RootEntry[i].fileSize;
+        }
+        free(file_name);
+    }
+    return 0;
+}
 
 int main(int argc, char* argv[])
 {
@@ -224,6 +283,12 @@ int main(int argc, char* argv[])
     show_BPB(disk_BootSector);
     show_RootEntries(disk_RootEntry, disk_BootSector.rootDirEntries);
     dump_fatTable(FAT_Table);
+
+    if(!readFile(diskImage, argv[2])){
+        printf("Couldn't find specified file\n");
+    }
+
+    
 
     free(disk_RootEntry);
     free(FAT_Table);
