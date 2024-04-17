@@ -1,2 +1,3 @@
 ./build/*
 ./bochs_config
+.editorconfig
