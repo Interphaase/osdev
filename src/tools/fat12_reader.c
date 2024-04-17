@@ -56,6 +56,25 @@ BootSector disk_BootSector;
 uint8_t* FAT_Table = NULL;
 DirEntry* disk_RootEntry = NULL;
 
+void dump_fatTable(uint8_t* fatTable){
+    printf("\nDUMPING FAT Table contents...\n");
+    for(int i = 0; i < disk_BootSector.sectorsPerFAT*disk_BootSector.bytesPerSector-1; i++){
+        uint16_t entry_buffer;
+        entry_buffer = ((uint16_t)fatTable[i] << 8) | fatTable[i+1];
+        if(i % 2 == 0){//even
+            entry_buffer = entry_buffer >> 4;
+        }
+        else{//odd
+            entry_buffer = entry_buffer & 0b0000111111111111;
+        }
+        printf("%dx%x ",i, entry_buffer);
+        if(i % 20 == 0 && i != 0){
+            printf("\n");
+        }
+    }
+    printf("\n");
+}
+
 void show_BPB(BootSector diskBootSector)
 {
     printf("*************************************************\n");
@@ -204,6 +223,7 @@ int main(int argc, char* argv[])
 
     show_BPB(disk_BootSector);
     show_RootEntries(disk_RootEntry, disk_BootSector.rootDirEntries);
+    dump_fatTable(FAT_Table);
 
     free(disk_RootEntry);
     free(FAT_Table);
