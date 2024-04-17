@@ -53,10 +53,10 @@ typedef struct
 } __attribute__((packed)) DirEntry;
 
 BootSector disk_BootSector;
-uint8_t *FAT_Table = NULL;
-DirEntry *disk_RootEntry = NULL;
+uint8_t* FAT_Table = NULL;
+DirEntry* disk_RootEntry = NULL;
 
-void Show_BPB(BootSector diskBootSector)
+void show_BPB(BootSector diskBootSector)
 {
     printf("*************************************************\n");
     printf("***          BOOT SECTOR FAT12 READER V1.0    ***\n");
@@ -86,7 +86,7 @@ void Show_BPB(BootSector diskBootSector)
     return;
 }
 
-void show_RootEntries(DirEntry *rootEntry, uint32_t rootEntriesCount)
+void show_RootEntries(DirEntry* rootEntry, uint32_t rootEntriesCount)
 {
 
     printf("Root Entries found on image: \n");
@@ -118,13 +118,13 @@ void show_RootEntries(DirEntry *rootEntry, uint32_t rootEntriesCount)
     return;
 }
 
-bool readBootRecord(FILE *diskImage)
+bool readBootRecord(FILE* diskImage)
 {
 
     return fread(&disk_BootSector, sizeof(uint8_t), sizeof(disk_BootSector), diskImage) > 0;
 }
 
-bool readSector(FILE *diskImage, uint32_t lba, uint32_t sector_count, void *buffer)
+bool readSector(FILE* diskImage, uint32_t lba, uint32_t sector_count, void* buffer)
 {
 
     bool read_state = true;
@@ -133,22 +133,22 @@ bool readSector(FILE *diskImage, uint32_t lba, uint32_t sector_count, void *buff
     return read_state;
 }
 
-bool readFATTables(FILE *diskImage)
+bool readFATTables(FILE* diskImage)
 {
-    FAT_Table = (uint8_t *)malloc(disk_BootSector.sectorsPerFAT * disk_BootSector.bytesPerSector);
+    FAT_Table = (uint8_t*)malloc(disk_BootSector.sectorsPerFAT * disk_BootSector.bytesPerSector);
     return readSector(diskImage, disk_BootSector.reservedSectors, disk_BootSector.sectorsPerFAT, FAT_Table);
 }
 
-bool readRootDirectory(FILE *diskImage)
+bool readRootDirectory(FILE* diskImage)
 {
     uint32_t root_start_sector = disk_BootSector.reservedSectors + disk_BootSector.FAT_number * disk_BootSector.sectorsPerFAT;
     uint32_t root_length_bytes = disk_BootSector.rootDirEntries * 32;
     uint32_t root_length_sectors = root_length_bytes / disk_BootSector.bytesPerSector;
-    disk_RootEntry = (DirEntry *)malloc(root_length_sectors * disk_BootSector.bytesPerSector);
+    disk_RootEntry = (DirEntry*)malloc(root_length_sectors * disk_BootSector.bytesPerSector);
     return readSector(diskImage, root_start_sector, root_length_sectors, disk_RootEntry);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
 
     if (argc < 3)
@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    FILE *diskImage = fopen(argv[1], "rb");
+    FILE* diskImage = fopen(argv[1], "rb");
 
     if (diskImage == NULL)
     {
@@ -181,8 +181,8 @@ int main(int argc, char *argv[])
         return -5;
     }
 
-    Show_BPB(disk_BootSector);
-    Show_RootEntries(disk_RootEntry, disk_BootSector.rootDirEntries);
+    show_BPB(disk_BootSector);
+    show_RootEntries(disk_RootEntry, disk_BootSector.rootDirEntries);
 
     free(disk_RootEntry);
     free(FAT_Table);
