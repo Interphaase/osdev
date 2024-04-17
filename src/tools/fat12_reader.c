@@ -96,22 +96,43 @@ void show_RootEntries(DirEntry* rootEntry, uint32_t rootEntriesCount)
         {
             break;
         }
-        uint16_t s, m, h;
-        s = (disk_RootEntry[i].creationTime & 31) * 2;
-        m = (disk_RootEntry[i].creationTime >> 5) & 63;
-        h = (disk_RootEntry[i].creationTime >> 11) & 31;
+        uint16_t creation_time_hours, creation_time_minutes, creation_time_seconds;
+        uint16_t last_write_time_hours, last_write_time_minutes, last_write_time_seconds;
+        uint16_t creation_date_year, creation_date_month, creation_date_day;
+        uint16_t last_access_year, last_access_month, last_access_day;
+        uint16_t last_write_year, last_write_month, last_write_day;
+
+        creation_time_seconds = (disk_RootEntry[i].creationTime & 31) * 2;
+        creation_time_minutes = (disk_RootEntry[i].creationTime >> 5) & 63;
+        creation_time_hours = (disk_RootEntry[i].creationTime >> 11) & 31;
+
+        last_write_time_seconds = (disk_RootEntry[i].lastWriteTime & 31) * 2;
+        last_write_time_minutes = (disk_RootEntry[i].lastWriteTime >> 5) & 63;
+        last_write_time_hours = (disk_RootEntry[i].lastWriteTime >> 11) & 31;
+
+        creation_date_day = (disk_RootEntry[i].creationDate) & 31;
+        creation_date_month = (disk_RootEntry[i].creationDate >> 5) & 63;
+        creation_date_year = ((disk_RootEntry[i].creationDate >> 9) & 127)+ 1980;
+
+        last_access_day = (disk_RootEntry[i].lastAccessDate) & 31;
+        last_access_month = (disk_RootEntry[i].lastAccessDate >> 5) & 63;
+        last_access_year = ((disk_RootEntry[i].lastAccessDate >> 9) & 127)+ 1980;
+
+        last_write_day = (disk_RootEntry[i].lastWriteDate) & 31;
+        last_write_month = (disk_RootEntry[i].lastWriteDate >> 5) & 63;
+        last_write_year = ((disk_RootEntry[i].lastWriteDate >> 9) & 127)+ 1980;
 
         printf("\nRoot Entry %d\n", i + 1);
         printf("File name: |%.8s|\n", disk_RootEntry[i].fileName);
         printf("File extension: |%.3s|\n", disk_RootEntry[i].fileExtension);
         printf("File Attributes: |0x%x|\n", disk_RootEntry[i].attributes);
         printf("Reserved: |0x%x|\n", disk_RootEntry[i].reserved);
-        printf("Creation Time: |%d:%d:%d|\n", h, m, s);
-        printf("Creation Date: |%d|\n", disk_RootEntry[i].creationDate);
-        printf("Last Access Date: |%d|\n", disk_RootEntry[i].lastAccessDate);
+        printf("Creation Time: |%d:%d:%d|\n", creation_time_hours, creation_time_minutes, creation_time_seconds);
+        printf("Creation Date: |%d.%d.%d|\n", creation_date_day, creation_date_month, creation_date_year);
+        printf("Last Access Date: |%d.%d.%d|\n", last_access_day, last_access_month, last_access_year);
         printf("Ignore: |0x%x|\n", disk_RootEntry[i].ignore);
-        printf("Last Write Time: |%d|\n", disk_RootEntry[i].lastWriteTime);
-        printf("Last Write Date: |%d|\n", disk_RootEntry[i].lastWriteDate);
+        printf("Last Write Time: |%d:%d:%d|\n", last_write_time_hours, last_write_time_minutes, last_write_time_seconds);
+        printf("Last Write Date: |%d.%d.%d|\n", last_write_day, last_write_month, last_write_year);
         printf("First Logical Cluster: |%x|\n", disk_RootEntry[i].firstLogicalCluster);
         printf("File size (bytes): |%d|\n", disk_RootEntry[i].fileSize);
     }
